@@ -112,7 +112,7 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
         disp("TIME:  "+(t * dTime)+" s")
         disp("ENVIRONMENT:")
         disp("Pressure: "+(environment_data(3)/1000))
-        disp("Temperature: "+(environment_data(4)-273))
+        disp("Temperature: "+(environment_data(4)-273.15))
         disp("Atm. Density: "+environment_data(6))
         disp(newline)
         %%BRAKE DATA HERE
