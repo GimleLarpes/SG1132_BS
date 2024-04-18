@@ -50,7 +50,7 @@ simulation_data_k = []; % Kinematic data
 
 environment_data = [dTime, SIMULATION_GRAVITY, e_AtmosphericPressure, e_AtmosphericTemperature, e_AtmosphericTemperature, e_AtmosphericDensity, [0, 0, 0], e_WindVelocity, e_WindDirection, e_GroundNormal];
 train_data = [t_Mass, t_MassCenter, t_BrakeForce, b_CFriction, t_CFriction, t_CFrictionG, t_WheelRadius, t_NBrakes];
-brake_state = [0, 0, 0, 0, 0, 0, 0, 0]; %Vector of braking forces, temperature - Top left, Top right, Bottom left, Bottom right
+brake_state = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; %Vector of braking forces, temperature - Top left, Top right, Bottom left, Bottom right
 kinematic_state = [0, 0, 0, t_StartHastighet, 0, 0, 0, 0, 0]; % Pos: X, Y, Z  Velocity: X, Y, Z  Acceleration: X, Y, Z
 for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
     
@@ -66,13 +66,13 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
 
     %Brake simulations
     %moment from uneven braking is ignored, add to N? (not needed for straight travel)
-    brake_state(1:2) = BrakeCalc(brake_state(1:2), train_data, environment_data, acceleration_vector, [t_Length/2, -t_Width/2]);%Front left brake
+    brake_state(1:3) = BrakeCalc(brake_state(1:3), train_data, environment_data, acceleration_vector, [t_Length/2, -t_Width/2]);%Front left brake
     
-    brake_force = brake_state(1) + brake_state(3) + brake_state(5) + brake_state(7);
+    brake_force = brake_state(1) + brake_state(4) + brake_state(7) + brake_state(10);
     brake_force = clamp(brake_force, 0, norm(velocity_vector) * t_Mass / dTime);
 
     %Log brake data
-    simulation_data_b = cat(2, simulation_data_b, [t * dTime; brake_state(1); brake_state(2); brake_state(3); brake_state(4); brake_state(5); brake_state(6); brake_state(7); brake_state(8)]);
+    simulation_data_b = cat(2, simulation_data_b, [t * dTime; brake_state(1); brake_state(2); brake_state(3); brake_state(4); brake_state(5); brake_state(6); brake_state(7); brake_state(8); brake_state(9); brake_state(10); brake_state(11); brake_state(12)]);
 
 
 
@@ -169,6 +169,10 @@ function [brake_state] = BrakeCalc(brake_state, train_data, environment_data, ac
     brake_number = train_data(8);
     brake_location = [centeroffset_xy, 0]; %vector to the brake
 
+    PreviousForce = brake_state(1);
+    Temperature = brake_state(2);
+    WheelSlip = brake_state(3);
+
     %Calculate braking moment
     M_b = 0.3 * wheel_radius * ((35 * brake_force) / (3 + 0.5 * brake_cf) + (8 * brake_force) / (1 - brake_cf / 6));
     
@@ -176,10 +180,11 @@ function [brake_state] = BrakeCalc(brake_state, train_data, environment_data, ac
     N = mass * (Gravity - z_mass * (dot(acceleration_vector, brake_location) / dot(brake_location, brake_location))) / brake_number;
 
     if (WheelSlip)
-        %
+        mu_w = wheel_cf_g;
     else
-        %
+        mu_w = wheel_cf;
     end
+    M_w = wheel_radius * N * mu_w;
 
     %Slipping
     if (M_b > M_w)
@@ -194,7 +199,7 @@ function [brake_state] = BrakeCalc(brake_state, train_data, environment_data, ac
     b_Force = 0;%BRAKING FORCE
     b_Temp = 0;%BRAKE TEMP(of the internal brake)?
 
-    brake_state = [b_Force, b_Temp];
+    brake_state = [b_Force, b_Temp, WheelSlip];
 end
 function [environment_data] = UpdateEnvironment(altitude, environment_data) % Calculate as functions of altitude
     % Source: https://www.grc.nasa.gov/WWW/K-12/airplane/atmosmet.html 
