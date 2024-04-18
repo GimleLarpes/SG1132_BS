@@ -27,15 +27,15 @@ t_Height = 2.0; % (m)
 t_WheelRadius = 0.5; % (m)
 t_NBrakes = 4; % Number of brakes
 
-t_CFriction = 0.18; % Coefficient of friction, Wheel
-t_CFrictionG = 0.03; % Coefficient of friction, Wheel, Gliding
+t_CFriction = 0.3044; % Coefficient of friction, Wheel
+t_CFrictionS = 0.18685; % Coefficient of friction, Wheel, Slipping
 
 t_StartHastighet = 10 / 3.6; % (km/h)
 
 %Brake parameters
 t_MassBrake = 4*50; % (kg)
 t_BrakeForce = 100.0; % (N)
-b_CFriction = 0.3; % Inner brake coefficient of friction
+b_CFriction = 0.495; % Inner brake coefficient of friction
 
 % Aerodynamics
 t_CDrag = 0.31; % Drag coefficient
@@ -49,7 +49,7 @@ simulation_data_b = []; % Brake data
 simulation_data_k = []; % Kinematic data
 
 environment_data = [dTime, SIMULATION_GRAVITY, e_AtmosphericPressure, e_AtmosphericTemperature, e_AtmosphericTemperature, e_AtmosphericDensity, [0, 0, 0], e_WindVelocity, e_WindDirection, e_GroundNormal];
-train_data = [t_Mass, t_MassCenter, t_BrakeForce, b_CFriction, t_CFriction, t_CFrictionG, t_WheelRadius, t_NBrakes];
+train_data = [t_Mass, t_MassCenter, t_BrakeForce, b_CFriction, t_CFriction, t_CFrictionS, t_WheelRadius, t_NBrakes];
 brake_state = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; %Vector of braking forces, temperature - Top left, Top right, Bottom left, Bottom right
 kinematic_state = [0, 0, 0, t_StartHastighet, 0, 0, 0, 0, 0]; % Pos: X, Y, Z  Velocity: X, Y, Z  Acceleration: X, Y, Z
 for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
@@ -66,8 +66,11 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
 
     %Brake simulations
     %moment from uneven braking is ignored, add to N? (not needed for straight travel)
-    brake_state(1:3) = BrakeCalc(brake_state(1:3), train_data, environment_data, acceleration_vector, [t_Length/2, -t_Width/2]);%Front left brake
-    
+    brake_state(1:3) = BrakeCalc(brake_state(1:3), train_data, environment_data, acceleration_vector, [t_Length/2, -t_Width/2]);    %Front left brake
+    brake_state(4:6) = BrakeCalc(brake_state(4:6), train_data, environment_data, acceleration_vector, [t_Length/2, t_Width/2]);     %Front right brake
+    brake_state(7:9) = BrakeCalc(brake_state(7:9), train_data, environment_data, acceleration_vector, [-t_Length/2, -t_Width/2]);   %Back left brake
+    brake_state(10:12) = BrakeCalc(brake_state(10:12), train_data, environment_data, acceleration_vector, [-t_Length/2, t_Width/2]);%Back right brake
+
     brake_force = brake_state(1) + brake_state(4) + brake_state(7) + brake_state(10);
     brake_force = clamp(brake_force, 0, norm(velocity_vector) * t_Mass / dTime);
 
@@ -146,6 +149,14 @@ if (plotselector == 1) % Braking over Time
     ylabel('Kraft [N]');
     legend('Upp Vänster','Upp Höger','Ner Vänster','Ner Höger');
 end
+if (plotselector == 2) % Velocity over Time
+    plot(simulation_data_k(1, :), sqrt(simulation_data_k(4, :).^2 + simulation_data_k(5, :).^2 + simulation_data_k(6, :).^2))
+    plot(simulation_data_k(1, :), sqrt(simulation_data_k(7, :).^2 + simulation_data_k(8, :).^2 + simulation_data_k(9, :).^2))
+    title('Hastighet och Deceleration');
+    xlabel('Tid [s]');
+    ylabel('[m/s]');
+    legend('Hastighet','Acceleration');
+end
 %PLOTS HERE
 
 
@@ -164,7 +175,7 @@ function [brake_state] = BrakeCalc(brake_state, train_data, environment_data, ac
     brake_force = train_data(3);
     brake_cf = train_data(4);
     wheel_cf = train_data(5);
-    wheel_cf_g = train_data(6);
+    wheel_cf_s = train_data(6);
     wheel_radius = train_data(7);
     brake_number = train_data(8);
     brake_location = [centeroffset_xy, 0]; %vector to the brake
@@ -180,7 +191,7 @@ function [brake_state] = BrakeCalc(brake_state, train_data, environment_data, ac
     N = mass * (Gravity - z_mass * (dot(acceleration_vector, brake_location) / dot(brake_location, brake_location))) / brake_number;
 
     if (WheelSlip)
-        mu_w = wheel_cf_g;
+        mu_w = wheel_cf_s;
     else
         mu_w = wheel_cf;
     end
@@ -189,14 +200,17 @@ function [brake_state] = BrakeCalc(brake_state, train_data, environment_data, ac
     %Slipping
     if (M_b > M_w)
         WheelSlip = true;
-        %
+
+        b_Force = mu_w * N;
     else
         WheelSlip = false;
-        %
+
+        M_w = clamp(M_w, 0, M_b);
+        b_Force = M_w / wheel_radius;
     end
 
 
-    b_Force = 0;%BRAKING FORCE
+    %b_Force = 0;%BRAKING FORCE
     b_Temp = 0;%BRAKE TEMP(of the internal brake)?
 
     brake_state = [b_Force, b_Temp, WheelSlip];
