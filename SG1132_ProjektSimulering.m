@@ -3,7 +3,7 @@ clear all
 LOG_FREQUENCY = 0.5;
 
 %Simulation parameters
-SIMULATION_TIME = 10.0;       %Simulation duration (s)
+SIMULATION_TIME = 20.0;       %Simulation duration (s)
 SIMULATION_RESOLUTION = 100;  %Steps per second (s^-1)
 SIMULATION_GRAVITY = 9.80665; %Assume gravity constant (ms^-2)
 
@@ -11,7 +11,7 @@ dTime = 1/SIMULATION_RESOLUTION;
 
 %Environmental parameters
 e_AtmosphericPressure = 101300.0; % 100kPa
-e_AtmosphericTemperature = 20 + 274.15; % (K)
+e_AtmosphericTemperature = 10 + 274.15; % (K)
 e_AtmosphericDensity = e_AtmosphericPressure / (8.31446261815324 * e_AtmosphericTemperature); % kgm^-3
 e_WindVelocity = 0;
 e_WindDirection = 0; % Global Wind Direction (RAD)
@@ -19,26 +19,26 @@ e_WindDirection = 0; % Global Wind Direction (RAD)
 e_GroundNormal = [0, 0, 1]; % Normal vector of the ground plane
 
 %Train parameters
-t_MassCargo = 1000.0; % (kg)
-t_MassCart = 500; % (kg)
-t_Length = 5.0; % (m)
-t_Width = 2.0; % (m)
-t_Height = 2.0; % (m)
+t_MassCargo = 0.0; % (kg) - MAX 29800
+t_MassCart = 15000; % (kg)
+t_Length = 15.140; % (m)
+t_Width = 2.9; % (m)
+t_Height = 2.765; % (m)
 t_WheelRadius = 0.5; % (m)
 t_NBrakes = 4; % Number of brakes
 
 t_CFriction = 0.3044; % Coefficient of friction, Wheel
 t_CFrictionS = 0.18685; % Coefficient of friction, Wheel, Slipping
 
-t_StartHastighet = 10 / 3.6; % (km/h)
+t_StartHastighet = 100 / 3.6; % (km/h)
 
 %Brake parameters
 t_MassBrake = 4*50; % (kg)
-t_BrakeForce = 100.0; % (N)
+t_BrakeForce = 2500.0; % (N)
 b_CFriction = 0.495; % Inner brake coefficient of friction
 
 % Aerodynamics
-t_CDrag = 0.31; % Drag coefficient
+t_CDrag = 0.98; % Drag coefficient
 t_Area = t_Width * t_Height; % Frontal crossection area
 
 t_Mass = t_MassCart + t_MassBrake + t_MassCargo;
@@ -118,7 +118,9 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
         disp("Temperature: "+(environment_data(4)-273.15))
         disp("Atm. Density: "+environment_data(6))
         disp(newline)
-        %%BRAKE DATA HERE
+        disp("BRAKES:")
+        disp("Braking Force: "+norm(brake_vector))
+        disp(newline)
         disp("KINEMATIC:")
         disp(sprintf("Position: (%d, %d, %d)", position_vector)) %#ok<DSPSP>
         disp("Speed: "+norm(velocity_vector))
@@ -140,14 +142,22 @@ end
 plotselector = 1;
 hold on
 if (plotselector == 1) % Braking over Time
-    plot(simulation_data_b(1, :), simulation_data_b(2, :))
-    plot(simulation_data_b(1, :), simulation_data_b(4, :))
-    plot(simulation_data_b(1, :), simulation_data_b(6, :))
-    plot(simulation_data_b(1, :), simulation_data_b(8, :))
-    title('Bromskraft per Broms');
+    b1 = simulation_data_b(2, :);
+    b2 = simulation_data_b(5, :);
+    b3 = simulation_data_b(8, :);
+    b4 = simulation_data_b(11, :);
+    plot(simulation_data_b(1, :), b1 + b2 + b3 + b4)
+    plot(simulation_data_b(1, :), b1 + b2)
+    plot(simulation_data_b(1, :), b3 + b4)
+    %plot(simulation_data_b(1, :), b1)
+    %plot(simulation_data_b(1, :), b2)
+    %plot(simulation_data_b(1, :), b3)
+    %plot(simulation_data_b(1, :), b4)
+    title('Bromskraft');
     xlabel('Tid [s]');
     ylabel('Kraft [N]');
-    legend('Upp Vänster','Upp Höger','Ner Vänster','Ner Höger');
+    %legend('Totalt','Upp Vänster','Upp Höger','Ner Vänster','Ner Höger');
+    legend('Totalt','Fram V+H','Bak V+H');
 end
 if (plotselector == 2) % Velocity over Time
     plot(simulation_data_k(1, :), sqrt(simulation_data_k(4, :).^2 + simulation_data_k(5, :).^2 + simulation_data_k(6, :).^2))
@@ -157,7 +167,7 @@ if (plotselector == 2) % Velocity over Time
     ylabel('[m/s]');
     legend('Hastighet','Acceleration');
 end
-%PLOTS HERE
+
 
 
 
@@ -210,10 +220,9 @@ function [brake_state] = BrakeCalc(brake_state, train_data, environment_data, ac
     end
 
 
-    %b_Force = 0;%BRAKING FORCE
     b_Temp = 0;%BRAKE TEMP(of the internal brake)?
-
-    brake_state = [b_Force, b_Temp, WheelSlip];
+    
+    brake_state = [max(b_Force, 0), b_Temp, WheelSlip];
 end
 function [environment_data] = UpdateEnvironment(altitude, environment_data) % Calculate as functions of altitude
     % Source: https://www.grc.nasa.gov/WWW/K-12/airplane/atmosmet.html 
