@@ -3,7 +3,7 @@ clear all
 LOG_FREQUENCY = 0.1;
 
 %Simulation parameters
-SIMULATION_TIME = 1;       %Simulation duration (s)
+SIMULATION_TIME = 1.0;       %Simulation duration (s)
 SIMULATION_RESOLUTION = 100; %Steps per second (s^-1)
 SIMULATION_GRAVITY = 9.80665; %Assume gravity constant (ms^-2)
 
@@ -70,9 +70,7 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
     drag_vector = -(0.5 * environment_data(6) * (air_velocity_vector / (norm(air_velocity_vector) + eps)) * norm(air_velocity_vector)^2 * t_CDrag * t_Area); % Drag
     brake_vector = [0,0,0];%TOTAL BRAKING FORCE, opposite direction to velocity, moment from uneven braking ignored.
     force_vector = brake_vector + drag_vector + t_Mass * [0, 0, -SIMULATION_GRAVITY];
-    normal_force_vector = -force_vector .* environment_data(12); % Pro tip- don't fall through the map
-    disp(force_vector)
-    disp(normal_force_vector)%wtf
+    normal_force_vector = -force_vector .* [environment_data(12), environment_data(13), environment_data(14)]; % Pro tip- don't fall through the map
     force_vector = force_vector + normal_force_vector;
 
 
@@ -134,6 +132,8 @@ function [brake_state] = BrakeCalc(brake_state, train_data, environment_data, ce
     atmospheric_pressure = environment_data(3);
     atmospheric_temperature = environment_data(4);
     prev_atmospheric_temperature = environment_data(5);
+
+    brake_location = [centeroffset_xy, 0]; %vector to the brake
     
 
     b_Force = 0;%BRAKING FORCE
