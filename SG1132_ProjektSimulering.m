@@ -154,13 +154,42 @@ end
 function [brake_state] = BrakeCalc(brake_state, train_data, environment_data, acceleration_vector, centeroffset_xy) %Calculate braking force
 
     dTime = environment_data(1);
+    Gravity = environment_data(2);
     atmospheric_pressure = environment_data(3);
     atmospheric_temperature = environment_data(4);
     prev_atmospheric_temperature = environment_data(5);
 
-    number_of_brakes = train_data(8);
+    mass = train_data(1);
+    z_mass = train_data(2);
+    brake_force = train_data(3);
+    brake_cf = train_data(4);
+    wheel_cf = train_data(5);
+    wheel_cf_g = train_data(6);
+    wheel_radius = train_data(7);
+    brake_number = train_data(8);
     brake_location = [centeroffset_xy, 0]; %vector to the brake
+
+    %Calculate braking moment
+    M_b = 0.3 * wheel_radius * ((35 * brake_force) / (3 + 0.5 * brake_cf) + (8 * brake_force) / (1 - brake_cf / 6));
     
+    %Calculate normal force
+    N = mass * (Gravity - z_mass * (dot(acceleration_vector, brake_location) / dot(brake_location, brake_location))) / brake_number;
+
+    if (WheelSlip)
+        %
+    else
+        %
+    end
+
+    %Slipping
+    if (M_b > M_w)
+        WheelSlip = true;
+        %
+    else
+        WheelSlip = false;
+        %
+    end
+
 
     b_Force = 0;%BRAKING FORCE
     b_Temp = 0;%BRAKE TEMP(of the internal brake)?
