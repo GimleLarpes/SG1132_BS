@@ -136,6 +136,12 @@ end
 %Readout (not working)
 plotselector = 1;
 hold on
+if (plotselector == 1) % Braking over Time
+    plot(simulation_data_b(1, :), simulation_data_b(2, :))
+    title('Bromskraft över tid');
+    xlabel('Tid [s]');
+    ylabel('Kraft [N]');
+end
 %PLOTS HERE
 
 
