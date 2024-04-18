@@ -1,10 +1,10 @@
-%Simulation engine for rockets and stuff
+%Simulation engine for ~~rockets~~trains and stuff
 clear all
 LOG_FREQUENCY = 0.5;
 
 %Simulation parameters
 SIMULATION_TIME = 10.0;       %Simulation duration (s)
-SIMULATION_RESOLUTION = 100; %Steps per second (s^-1)
+SIMULATION_RESOLUTION = 100;  %Steps per second (s^-1)
 SIMULATION_GRAVITY = 9.80665; %Assume gravity constant (ms^-2)
 
 dTime = 1/SIMULATION_RESOLUTION;
@@ -66,7 +66,10 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
 
     %Brake simulations
     %moment from uneven braking is ignored, add to N? (not needed for straight travel)
-    brake_state(1:2) = BrakeCalc(brake_state(1:2), train_data, environment_data, acceleration_vector, velocity_vector, [t_Length/2, -t_Width/2]);%Front left brake
+    brake_state(1:2) = BrakeCalc(brake_state(1:2), train_data, environment_data, acceleration_vector, [t_Length/2, -t_Width/2]);%Front left brake
+    
+    brake_force = brake_state(1) + brake_state(3) + brake_state(5) + brake_state(7);
+    brake_force = clamp(brake_force, 0, norm(velocity_vector) * t_Mass / dTime);
 
     %Log brake data
     simulation_data_b = cat(2, simulation_data_b, [t * dTime; brake_state(1); brake_state(2); brake_state(3); brake_state(4); brake_state(5); brake_state(6); brake_state(7); brake_state(8)]);
@@ -79,7 +82,7 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
     force_vector = force_vector - force_vector .* [environment_data(12), environment_data(13), environment_data(14)]; % Pro tip- don't fall through the map
     
     drag_vector = -(0.5 * environment_data(6) * (air_velocity_vector / (norm(air_velocity_vector) + eps)) * norm(air_velocity_vector)^2 * t_CDrag * t_Area); % Drag
-    brake_vector = [0,0,0];%TOTAL BRAKING FORCE, opposite direction to velocity, moment from uneven braking ignored.
+    brake_vector = -(velocity_vector / norm(velocity_vector) + eps) * brake_force; % Total braking force
     
     force_vector = force_vector + brake_vector + drag_vector;
 
@@ -138,7 +141,7 @@ hold on
 
 
 %Functions
-function [brake_state] = BrakeCalc(brake_state, train_data, environment_data, acceleration_vector, velocity_vector, centeroffset_xy) %Calculate braking force
+function [brake_state] = BrakeCalc(brake_state, train_data, environment_data, acceleration_vector, centeroffset_xy) %Calculate braking force
 
     dTime = environment_data(1);
     atmospheric_pressure = environment_data(3);
@@ -174,3 +177,6 @@ function [environment_data] = UpdateEnvironment(altitude, environment_data) % Ca
 end
 
 
+function y = clamp(x,bl,bu)
+    y=min(max(x,bl),bu);
+end
