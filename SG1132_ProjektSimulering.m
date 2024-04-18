@@ -3,7 +3,7 @@ clear all
 LOG_FREQUENCY = 0.5;
 
 %Simulation parameters
-SIMULATION_TIME = 20.0;       %Simulation duration (s)
+SIMULATION_TIME = 60.0;       %Simulation duration (s)
 SIMULATION_RESOLUTION = 100;  %Steps per second (s^-1)
 SIMULATION_GRAVITY = 9.80665; %Assume gravity constant (ms^-2)
 
@@ -59,6 +59,9 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
     acceleration_vector = [kinematic_state(7), kinematic_state(8), kinematic_state(9)];
     wind_vector = [environment_data(7), environment_data(8), environment_data(9)];
     air_velocity_vector = velocity_vector + wind_vector;
+
+    % Driving parameters
+    %train_data(3)=t_BrakeForce*t/(SIMULATION_RESOLUTION*SIMULATION_TIME); % Brake actuator force
 
 
     % Update environment
@@ -165,7 +168,7 @@ if (plotselector == 2) % Velocity over Time
     title('Hastighet och Deceleration');
     xlabel('Tid [s]');
     ylabel('[m/s]');
-    legend('Hastighet','Acceleration');
+    legend('Hastighet','Deceleration');
 end
 
 
