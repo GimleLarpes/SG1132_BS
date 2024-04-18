@@ -138,9 +138,13 @@ plotselector = 1;
 hold on
 if (plotselector == 1) % Braking over Time
     plot(simulation_data_b(1, :), simulation_data_b(2, :))
-    title('Bromskraft över tid');
+    plot(simulation_data_b(1, :), simulation_data_b(4, :))
+    plot(simulation_data_b(1, :), simulation_data_b(6, :))
+    plot(simulation_data_b(1, :), simulation_data_b(8, :))
+    title('Bromskraft per Broms');
     xlabel('Tid [s]');
     ylabel('Kraft [N]');
+    legend('Upp Vänster','Upp Höger','Ner Vänster','Ner Höger');
 end
 %PLOTS HERE
 
