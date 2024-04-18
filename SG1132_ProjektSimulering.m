@@ -1,5 +1,6 @@
 %Simulation engine for ~~rockets~~trains and stuff
 clear all
+
 LOG_FREQUENCY = 0.5;
 
 %Simulation parameters
