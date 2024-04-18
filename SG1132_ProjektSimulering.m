@@ -25,6 +25,7 @@ t_Length = 5.0; % (m)
 t_Width = 2.0; % (m)
 t_Height = 2.0; % (m)
 t_WheelRadius = 0.5; % (m)
+t_NBrakes = 4; % Number of brakes
 
 t_CFriction = 0.18; % Coefficient of friction, Wheel
 t_CFrictionG = 0.03; % Coefficient of friction, Wheel, Gliding
@@ -48,7 +49,7 @@ simulation_data_b = []; % Brake data
 simulation_data_k = []; % Kinematic data
 
 environment_data = [dTime, SIMULATION_GRAVITY, e_AtmosphericPressure, e_AtmosphericTemperature, e_AtmosphericTemperature, e_AtmosphericDensity, [0, 0, 0], e_WindVelocity, e_WindDirection, e_GroundNormal];
-train_data = [t_Mass, t_MassCenter, t_BrakeForce, b_CFriction, t_CFriction, t_CFrictionG, t_WheelRadius];
+train_data = [t_Mass, t_MassCenter, t_BrakeForce, b_CFriction, t_CFriction, t_CFrictionG, t_WheelRadius, t_NBrakes];
 brake_state = [0, 0, 0, 0, 0, 0, 0, 0]; %Vector of braking forces, temperature - Top left, Top right, Bottom left, Bottom right
 kinematic_state = [0, 0, 0, t_StartHastighet, 0, 0, 0, 0, 0]; % Pos: X, Y, Z  Velocity: X, Y, Z  Acceleration: X, Y, Z
 for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
@@ -144,6 +145,7 @@ function [brake_state] = BrakeCalc(brake_state, train_data, environment_data, ac
     atmospheric_temperature = environment_data(4);
     prev_atmospheric_temperature = environment_data(5);
 
+    number_of_brakes = train_data(8);
     brake_location = [centeroffset_xy, 0]; %vector to the brake
     
 
