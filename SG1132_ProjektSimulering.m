@@ -1,9 +1,9 @@
 %Simulation engine for rockets and stuff
 clear all
-LOG_FREQUENCY = 0.1;
+LOG_FREQUENCY = 0.5;
 
 %Simulation parameters
-SIMULATION_TIME = 1.0;       %Simulation duration (s)
+SIMULATION_TIME = 10.0;       %Simulation duration (s)
 SIMULATION_RESOLUTION = 100; %Steps per second (s^-1)
 SIMULATION_GRAVITY = 9.80665; %Assume gravity constant (ms^-2)
 
@@ -25,12 +25,16 @@ t_Length = 5.0; % (m)
 t_Width = 2.0; % (m)
 t_Height = 2.0; % (m)
 t_WheelRadius = 0.5; % (m)
-t_CFriction = 0.18;
+
+t_CFriction = 0.18; % Coefficient of friction, Wheel
+t_CFrictionG = 0.03; % Coefficient of friction, Wheel, Gliding
+
+t_StartHastighet = 10 / 3.6; % (km/h)
 
 %Brake parameters
 t_MassBrake = 4*50; % (kg)
 t_BrakeForce = 100.0; % (N)
-b_CFriction = 0.3;
+b_CFriction = 0.3; % Inner brake coefficient of friction
 
 % Aerodynamics
 t_CDrag = 0.31; % Drag coefficient
@@ -44,16 +48,24 @@ simulation_data_b = []; % Brake data
 simulation_data_k = []; % Kinematic data
 
 environment_data = [dTime, SIMULATION_GRAVITY, e_AtmosphericPressure, e_AtmosphericTemperature, e_AtmosphericTemperature, e_AtmosphericDensity, [0, 0, 0], e_WindVelocity, e_WindDirection, e_GroundNormal];
-train_data = [t_Mass, t_MassCenter, t_BrakeForce, b_CFriction, t_CFriction, t_WheelRadius];
+train_data = [t_Mass, t_MassCenter, t_BrakeForce, b_CFriction, t_CFriction, t_CFrictionG, t_WheelRadius];
 brake_state = [0, 0, 0, 0, 0, 0, 0, 0]; %Vector of braking forces, temperature - Top left, Top right, Bottom left, Bottom right
-kinematic_state = [0, 0, 0, 0, 0, 0]; % Pos: X, Y, Z  Velocity: X, Y, Z
+kinematic_state = [0, 0, 0, t_StartHastighet, 0, 0, 0, 0, 0]; % Pos: X, Y, Z  Velocity: X, Y, Z  Acceleration: X, Y, Z
 for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
+    
+    position_vector = [kinematic_state(1), kinematic_state(2), kinematic_state(3)];
+    velocity_vector = [kinematic_state(4), kinematic_state(5), kinematic_state(6)];
+    acceleration_vector = [kinematic_state(7), kinematic_state(8), kinematic_state(9)];
+    wind_vector = [environment_data(7), environment_data(8), environment_data(9)];
+    air_velocity_vector = velocity_vector + wind_vector;
+
+
     % Update environment
-    environment_data = UpdateEnvironment(kinematic_state(3), environment_data);
+    environment_data = UpdateEnvironment(position_vector(3), environment_data);
 
     %Brake simulations
     %moment from uneven braking is ignored, add to N? (not needed for straight travel)
-    brake_state(1:2) = BrakeCalc(brake_state, train_data, environment_data, [t_Length/2, -t_Width/2]);%Front left brake
+    brake_state(1:2) = BrakeCalc(brake_state(1:2), train_data, environment_data, acceleration_vector, velocity_vector, [t_Length/2, -t_Width/2]);%Front left brake
 
     %Log brake data
     simulation_data_b = cat(2, simulation_data_b, [t * dTime; brake_state(1); brake_state(2); brake_state(3); brake_state(4); brake_state(5); brake_state(6); brake_state(7); brake_state(8)]);
@@ -61,27 +73,25 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
 
 
     % Kinematic calc
-    position_vector = [kinematic_state(1), kinematic_state(2), kinematic_state(3)];
-    velocity_vector = [kinematic_state(4), kinematic_state(5), kinematic_state(6)];
-    wind_vector = [environment_data(7), environment_data(8), environment_data(9)];
-    air_velocity_vector = velocity_vector + wind_vector;
-
     %Forces
+    force_vector = t_Mass * [0, 0, -SIMULATION_GRAVITY];
+    force_vector = force_vector - force_vector .* [environment_data(12), environment_data(13), environment_data(14)]; % Pro tip- don't fall through the map
+    
     drag_vector = -(0.5 * environment_data(6) * (air_velocity_vector / (norm(air_velocity_vector) + eps)) * norm(air_velocity_vector)^2 * t_CDrag * t_Area); % Drag
     brake_vector = [0,0,0];%TOTAL BRAKING FORCE, opposite direction to velocity, moment from uneven braking ignored.
-    force_vector = brake_vector + drag_vector + t_Mass * [0, 0, -SIMULATION_GRAVITY];
-    normal_force_vector = -force_vector .* [environment_data(12), environment_data(13), environment_data(14)]; % Pro tip- don't fall through the map
-    force_vector = force_vector + normal_force_vector;
+    
+    force_vector = force_vector + brake_vector + drag_vector;
 
 
     % Apply forces
-    velocity_vector = velocity_vector + dTime * (force_vector / t_Mass);
+    acceleration_vector = force_vector / t_Mass;
+    kinematic_state(7) = acceleration_vector(1);
+    kinematic_state(8) = acceleration_vector(2);
+    kinematic_state(9) = acceleration_vector(3);
+    velocity_vector = velocity_vector + dTime * acceleration_vector;
     kinematic_state(4) = velocity_vector(1);
     kinematic_state(5) = velocity_vector(2);
     kinematic_state(6) = velocity_vector(3);
-
-
-    % Update position
     position_vector = position_vector + dTime * velocity_vector;
     kinematic_state(1) = position_vector(1);
     kinematic_state(2) = position_vector(2);
@@ -90,7 +100,7 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
 
 
     %Log data
-    simulation_data_k = cat(2, simulation_data_k, [t * dTime; kinematic_state(1); kinematic_state(2); kinematic_state(3); kinematic_state(4); kinematic_state(5); kinematic_state(6)]);
+    simulation_data_k = cat(2, simulation_data_k, [t * dTime; kinematic_state(1); kinematic_state(2); kinematic_state(3); kinematic_state(4); kinematic_state(5); kinematic_state(6); kinematic_state(7); kinematic_state(8); kinematic_state(9)]);
 
     % Debug readout
     if (mod(t, SIMULATION_RESOLUTION * LOG_FREQUENCY) < 1) && true
@@ -101,13 +111,14 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
         disp("Temperature: "+(environment_data(4)-273))
         disp("Atm. Density: "+environment_data(6))
         disp(newline)
+        %%BRAKE DATA HERE
         disp("KINEMATIC:")
+        disp(sprintf("Position: (%d, %d, %d)", position_vector)) %#ok<DSPSP>
         disp("Speed: "+norm(velocity_vector))
         disp(sprintf("Velocity: (%d, %d, %d)", velocity_vector)) %#ok<DSPSP>
-        disp(sprintf("Position: (%d, %d, %d)", position_vector)) %#ok<DSPSP>
+        disp(sprintf("Acceleration: (%d, %d, %d)", acceleration_vector)) %#ok<DSPSP>
         disp("Drag Force: "+norm(drag_vector))
         disp("Total Force: "+norm(force_vector))
-
     end
 
     %Check if stopped
@@ -119,14 +130,14 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
 end
 
 %Readout (not working)
-plotselector = 3;
+plotselector = 1;
 hold on
 %PLOTS HERE
 
 
 
 %Functions
-function [brake_state] = BrakeCalc(brake_state, train_data, environment_data, centeroffset_xy) %Calculate braking force
+function [brake_state] = BrakeCalc(brake_state, train_data, environment_data, acceleration_vector, velocity_vector, centeroffset_xy) %Calculate braking force
 
     dTime = environment_data(1);
     atmospheric_pressure = environment_data(3);
