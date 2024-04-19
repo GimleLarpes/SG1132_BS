@@ -61,7 +61,7 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
     air_velocity_vector = velocity_vector + wind_vector;
 
     % Driving parameters
-    %train_data(3)=t_BrakeForce*t/(SIMULATION_RESOLUTION*SIMULATION_TIME); % Brake actuator force
+    %train_data(3)=t_BrakeForce*(1-3*t/(SIMULATION_RESOLUTION*SIMULATION_TIME)); % Brake actuator force
 
 
     % Update environment
@@ -136,7 +136,11 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
     %Check if stopped
     if (norm(velocity_vector) == 0)
         simulation_duration = t / SIMULATION_RESOLUTION;
+        disp(newline)
+        disp("FINAL STATE")
         disp("Simulation Time: "+simulation_duration)
+        disp("Final Speed: "+norm(velocity_vector))
+        disp("Final Distance: "+norm(position_vector))
         break;
     end
 end
@@ -159,7 +163,7 @@ if (plotselector == 1) % Braking over Time
     title('Bromskraft');
     xlabel('Tid [s]');
     ylabel('Kraft [N]');
-    %legend('Totalt','Upp Vänster','Upp Höger','Ner Vänster','Ner Höger');
+    %legend('Totalt','Fram Vänster','Fram Höger','Bak Vänster','Bak Höger');
     legend('Totalt','Fram V+H','Bak V+H');
 end
 if (plotselector == 2) % Velocity over Time
