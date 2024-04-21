@@ -70,7 +70,8 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %  Driving parameters
-    BrakeRampSpeed = 0.5; % (s^-1)
+    BrakeRampSpeed = 2.0; % (s^-1)
+    ActuationMaxSpeed = 1.0; % Max actuation speed (s^-1)
 
     %Shitty ABS
     if (ABS_ENABLED)
@@ -91,7 +92,7 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
         brake_target = 1;
     end
 
-    brake_actuation = brake_actuation + dTime * (brake_target - brake_actuation) * BrakeRampSpeed;
+    brake_actuation = brake_actuation + dTime * clamp((brake_target - brake_actuation) * BrakeRampSpeed, -ActuationMaxSpeed, ActuationMaxSpeed);
     
     train_data(3) = t_BrakeForce * brake_actuation; % Brake actuator force
 
