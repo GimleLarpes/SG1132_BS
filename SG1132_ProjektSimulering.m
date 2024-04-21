@@ -5,7 +5,7 @@ LOG_ENABLED = true;
 
 %Simulation parameters
 SIMULATION_TIME = 600.0;       %Simulation duration (s)
-SIMULATION_END_ON_STOP = false;
+SIMULATION_END_ON_STOP = true;
 SIMULATION_RESOLUTION = 100;  %Steps per second (s^-1)
 SIMULATION_GRAVITY = 9.80665; %Assume gravity constant (ms^-2)
 
@@ -39,6 +39,7 @@ t_MassBrake = 4*50; % (kg)
 t_BrakeForce = 2500.0; % (N)
 b_CFriction = 0.42; % Inner brake coefficient of friction
 t_BrakeSurfaceArea = 2 * (0.5*0.3 + 0.3*0.15 + 0.15*0.5); % (m^2)
+ABS_ENABLED = true;
 
 % Aerodynamics
 t_CDrag = 0.98; % Drag coefficient
@@ -55,6 +56,9 @@ environment_data = [dTime, SIMULATION_GRAVITY, e_AtmosphericPressure, e_Atmosphe
 train_data = [t_Mass, t_MassCenter, t_BrakeForce, b_CFriction, t_CFriction, t_CFrictionS, t_WheelRadius, t_NBrakes, t_MassBrake, t_BrakeSurfaceArea];
 brake_state = [0, e_AtmosphericTemperature, 0, 0, e_AtmosphericTemperature, 0, 0, e_AtmosphericTemperature, 0, 0, e_AtmosphericTemperature, 0]; %Vector of braking forces, temperature, slip - Top left, Top right, Bottom left, Bottom right
 kinematic_state = [0, 0, 0, t_StartHastighet, 0, 0, 0, 0, 0]; % Pos: X, Y, Z  Velocity: X, Y, Z  Acceleration: X, Y, Z
+brake_actuation = 0;
+brake_limit = 1;
+brake_slippage_prev = false;
 for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
     
     position_vector = [kinematic_state(1), kinematic_state(2), kinematic_state(3)];
@@ -66,7 +70,30 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %  Driving parameters
-    train_data(3)=t_BrakeForce*8*t/(SIMULATION_RESOLUTION*SIMULATION_TIME); % Brake actuator force
+    BrakeRampSpeed = 0.5; % (s^-1)
+
+    %Shitty ABS
+    if (ABS_ENABLED)
+    brake_slippage = brake_state(3) || brake_state(6) || brake_state(9) || brake_state(12);
+    if (brake_slippage)
+        brake_target = 0.0;
+        if not (brake_slippage_prev)
+            brake_limit = brake_actuation - 0.05;
+        end
+
+        brake_slippage_prev = true;
+    else
+        brake_target = brake_limit;
+
+        brake_slippage_prev = false;
+    end
+    else
+        brake_target = 1;
+    end
+
+    brake_actuation = brake_actuation + dTime * (brake_target - brake_actuation) * BrakeRampSpeed;
+    
+    train_data(3) = t_BrakeForce * brake_actuation; % Brake actuator force
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
