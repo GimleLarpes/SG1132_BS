@@ -1,9 +1,11 @@
 %Simulation engine for ~~rockets~~trains and stuff
 clear all
 LOG_FREQUENCY = 1.0;
+LOG_ENABLED = true;
 
 %Simulation parameters
-SIMULATION_TIME = 60.0;       %Simulation duration (s)
+SIMULATION_TIME = 600.0;       %Simulation duration (s)
+SIMULATION_END_ON_STOP = false;
 SIMULATION_RESOLUTION = 100;  %Steps per second (s^-1)
 SIMULATION_GRAVITY = 9.80665; %Assume gravity constant (ms^-2)
 
@@ -36,6 +38,7 @@ t_StartHastighet = 100 / 3.6; % (km/h)
 t_MassBrake = 4*50; % (kg)
 t_BrakeForce = 2500.0; % (N)
 b_CFriction = 0.42; % Inner brake coefficient of friction
+t_BrakeSurfaceArea = 2 * (0.5*0.3 + 0.3*0.15 + 0.15*0.5); % (m^2)
 
 % Aerodynamics
 t_CDrag = 0.98; % Drag coefficient
@@ -49,7 +52,7 @@ simulation_data_b = []; % Brake data
 simulation_data_k = []; % Kinematic data
 
 environment_data = [dTime, SIMULATION_GRAVITY, e_AtmosphericPressure, e_AtmosphericTemperature, e_AtmosphericTemperature, e_AtmosphericDensity, [0, 0, 0], e_WindVelocity, e_WindDirection, e_GroundNormal];
-train_data = [t_Mass, t_MassCenter, t_BrakeForce, b_CFriction, t_CFriction, t_CFrictionS, t_WheelRadius, t_NBrakes, t_MassBrake];
+train_data = [t_Mass, t_MassCenter, t_BrakeForce, b_CFriction, t_CFriction, t_CFrictionS, t_WheelRadius, t_NBrakes, t_MassBrake, t_BrakeSurfaceArea];
 brake_state = [0, e_AtmosphericTemperature, 0, 0, e_AtmosphericTemperature, 0, 0, e_AtmosphericTemperature, 0, 0, e_AtmosphericTemperature, 0]; %Vector of braking forces, temperature, slip - Top left, Top right, Bottom left, Bottom right
 kinematic_state = [0, 0, 0, t_StartHastighet, 0, 0, 0, 0, 0]; % Pos: X, Y, Z  Velocity: X, Y, Z  Acceleration: X, Y, Z
 for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
@@ -63,7 +66,7 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %  Driving parameters
-    train_data(3)=t_BrakeForce*t/(SIMULATION_RESOLUTION*SIMULATION_TIME); % Brake actuator force
+    train_data(3)=t_BrakeForce*8*t/(SIMULATION_RESOLUTION*SIMULATION_TIME); % Brake actuator force
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -95,6 +98,7 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
     brake_vector = -(velocity_vector / norm(velocity_vector) + eps) * brake_force; % Total braking force
     
     force_vector = force_vector + brake_vector + drag_vector;
+    force_vector(isnan(force_vector))=0;
 
 
     % Apply forces
@@ -117,7 +121,7 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
     simulation_data_k = cat(2, simulation_data_k, [t * dTime; kinematic_state(1); kinematic_state(2); kinematic_state(3); kinematic_state(4); kinematic_state(5); kinematic_state(6); kinematic_state(7); kinematic_state(8); kinematic_state(9)]);
 
     % Debug readout
-    if (mod(t, SIMULATION_RESOLUTION * LOG_FREQUENCY) < 1) && true
+    if (mod(t, SIMULATION_RESOLUTION * LOG_FREQUENCY) < 1) && LOG_ENABLED
         disp("--------------------------------------------")
         disp("TIME:  "+(t * dTime)+" s")
         disp("ENVIRONMENT:")
@@ -138,7 +142,7 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
     end
 
     %Check if stopped
-    if (norm(velocity_vector) == 0)
+    if (norm(velocity_vector) == 0) && SIMULATION_END_ON_STOP
         simulation_duration = t / SIMULATION_RESOLUTION;
         disp(newline)
         disp("FINAL STATE")
@@ -237,6 +241,9 @@ function [brake_state] = BrakeCalc(brake_state, train_data, environment_data, ac
     dTime = environment_data(1);
     Gravity = environment_data(2);
     atmospheric_temperature = environment_data(4);
+    atmospheric_density = environment_data(6);
+    air_velocity_vector = velocity_vector + [environment_data(7), environment_data(8), environment_data(9)];
+    ground_normal = [environment_data(10), environment_data(11), environment_data(12)];
 
     mass = train_data(1);
     z_mass = train_data(2);
@@ -248,8 +255,16 @@ function [brake_state] = BrakeCalc(brake_state, train_data, environment_data, ac
     brake_number = train_data(8);
     brake_mass = train_data(9);
     brake_location = [centeroffset_xy, 0]; %vector to the brake
+    brake_surface_area = train_data(10);
+    brake_chord_length = 0.3; % (m)
 
     specific_heat_capacity = 510.7896; % (J*kg^-1*K^-1)
+    stefan_boltzmann = 5.67*10^-8;
+    emissivity = 0.79;
+
+    prandtl_number = 0.71;
+    thermal_conductivity = 0.02572; % (W/(m^2K))
+    kinematic_viscosity = 1.460 * 10^-5; % (m^2/s)
 
     b_Temp = brake_state(2);
     WheelSlip = brake_state(3);
@@ -258,7 +273,8 @@ function [brake_state] = BrakeCalc(brake_state, train_data, environment_data, ac
     M_b = 0.3 * wheel_radius * ((35 * brake_force) / (3 + 0.5 * brake_cf) + (8 * brake_force) / (1 - brake_cf / 6));
     
     %Calculate normal force
-    N = mass * (Gravity - z_mass * (dot(acceleration_vector, brake_location) / dot(brake_location, brake_location))) / brake_number;
+    brake_location_length2 = dot(brake_location, brake_location);
+    N = mass * (Gravity + z_mass * (Gravity * dot(ground_normal, brake_location) / brake_location_length2 - dot(acceleration_vector, brake_location) / brake_location_length2)) / brake_number;
 
     if (WheelSlip)
         mu_w = wheel_cf_s;
@@ -279,13 +295,31 @@ function [brake_state] = BrakeCalc(brake_state, train_data, environment_data, ac
         b_Force = M_w / wheel_radius;
     end
 
+
     %Thermal calculations
-    %Thermal energy
     if not (WheelSlip)
         Q = b_Force * dTime * norm(velocity_vector);
         dTemperature = brake_number * Q / (brake_mass * specific_heat_capacity);
         b_Temp = b_Temp + dTemperature;
     end
+
+    %Thermodynamics brake-environment
+    %Radiated
+    temp_difference = b_Temp - atmospheric_temperature;
+    Q = dTime * stefan_boltzmann * emissivity * brake_surface_area * sign(temp_difference) * temp_difference^4;
+
+    %Convection
+    reynolds_number = (norm(air_velocity_vector) * brake_chord_length) / kinematic_viscosity;
+    if (reynolds_number > 5*10^5)
+        nusselt_number = 0.0308 * reynolds_number^0.8 * prandtl_number^(1/3); % Turbulent flow
+    else
+        nusselt_number = 0.453 * reynolds_number^0.5 * prandtl_number^(1/3); % Laminar flow
+    end
+    convective_heat_transfer = (nusselt_number * thermal_conductivity) / brake_chord_length;
+    Q = Q + dTime * convective_heat_transfer * brake_surface_area * temp_difference;
+
+    b_Temp = b_Temp - brake_number * Q / (brake_mass * specific_heat_capacity);
+    
     
     brake_state = [max(b_Force, 0), b_Temp, WheelSlip];
 end
