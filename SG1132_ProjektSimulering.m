@@ -18,7 +18,7 @@ e_AtmosphericDensity = e_AtmosphericPressure / (8.31446261815324 * e_Atmospheric
 e_WindVelocity = 0;
 e_WindDirection = 0; % Global Wind Direction (RAD)
 
-e_GroundNormal = [0, 1, 0]; % Normal vector of the ground plane
+e_GroundNormal = [0, 0, 1]; % Normal vector of the ground plane
 
 %Train parameters
 t_MassCargo = 0.0; % (kg) - MAX 29800
@@ -32,7 +32,7 @@ t_NBrakes = 4; % Number of brakes
 t_CFriction = 0.3044; % Coefficient of friction, Wheel
 t_CFrictionS = 0.18685; % Coefficient of friction, Wheel, Slipping
 
-t_StartHastighet = 1000 / 3.6; % (km/h)
+t_StartHastighet = 100 / 3.6; % (km/h)
 
 %Brake parameters
 t_MassBrake = 4*50; % (kg)
@@ -181,7 +181,7 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
     end
 end
 
-%Readout (not working)
+%Plots
 plotselector = 5;
 hold on
 if (plotselector == 1) % Velocity and Deceleration over Time
@@ -271,7 +271,7 @@ function [brake_state] = BrakeCalc(brake_state, train_data, environment_data, ac
     atmospheric_temperature = environment_data(4);
     atmospheric_density = environment_data(6);
     air_velocity_vector = velocity_vector + [environment_data(7), environment_data(8), environment_data(9)];
-    ground_normal = [environment_data(10), environment_data(11), environment_data(12)];
+    ground_normal = [environment_data(12), environment_data(13), environment_data(14)];
 
     mass = train_data(1);
     z_mass = train_data(2);
