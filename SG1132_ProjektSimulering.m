@@ -81,16 +81,13 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
         if not (brake_slippage_prev)
             brake_limit = brake_actuation - 0.05;
         end
-
-        brake_slippage_prev = true;
     else
         brake_target = brake_limit;
-
-        brake_slippage_prev = false;
     end
     else
         brake_target = 1;
     end
+    brake_slippage_prev = brake_slippage;
 
     brake_actuation = brake_actuation + dTime * clamp((brake_target - brake_actuation) * BrakeRampSpeed, -ActuationMaxSpeed, ActuationMaxSpeed);
     
