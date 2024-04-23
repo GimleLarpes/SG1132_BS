@@ -1,7 +1,12 @@
 %%ANALYS:
 % Scenariot är att tåget stannar så fort som möjligt och på så kort sträcka som möjligt från 100kmh.
+%% Resultat:
+% Anti-Glid inbromsning: Tid: 10.92s, Bromssträcka: 153.2759m, Medel Bromstemp: 337.5271541334959 K
+% Perfekt inbromsning: Tid: 10.30s, Bromssträcka: 144.644m, Medel Bromstemp: 338.6922578057968 K
+% Tvärnit, glidning: 
 
-% Medelvärde av bromssträckan då man ignorerar de punkter där upplösningen < 500: 154.0093334843901 meter.
+
+% Medelvärde av bromssträckan då man ignorerar de punkter där upplösningen < 500: 154.0093334843901 meter. (Anti-Glid inbromsning)
 % Noggranhetsanalys Sträcka över tid-grafen visar den beräknade optimala bromssträckan med anti-glid-system över olika upplösningar. (medel är 5 point trailing average)
 
 %Simulation engine for ~~rockets~~trains and stuff
