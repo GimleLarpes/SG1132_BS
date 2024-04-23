@@ -57,7 +57,7 @@ train_data = [t_Mass, t_MassCenter, t_BrakeForce, b_CFriction, t_CFriction, t_CF
 brake_state = [0, e_AtmosphericTemperature, 0, 0, e_AtmosphericTemperature, 0, 0, e_AtmosphericTemperature, 0, 0, e_AtmosphericTemperature, 0]; %Vector of braking forces, temperature, slip - Top left, Top right, Bottom left, Bottom right
 kinematic_state = [0, 0, 0, t_StartHastighet, 0, 0, 0, 0, 0]; % Pos: X, Y, Z  Velocity: X, Y, Z  Acceleration: X, Y, Z
 brake_actuation = 0;
-brake_limit = 1.0;
+brake_limit = 0.73;
 brake_slippage_prev = false;
 for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
     
@@ -180,11 +180,13 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
 end
 
 %Plots
-plotselector = 5;
+plotselector = 1;
 hold on
 if (plotselector == 1) % Velocity and Deceleration over Time
     plot(simulation_data_k(1, :), sqrt(simulation_data_k(4, :).^2 + simulation_data_k(5, :).^2 + simulation_data_k(6, :).^2))
     plot(simulation_data_k(1, :), sqrt(simulation_data_k(7, :).^2 + simulation_data_k(8, :).^2 + simulation_data_k(9, :).^2))
+    ylim([0 30])
+    xlim([0 15])
     title('Hastighet och Deceleration');
     xlabel('Tid [s]');
     ylabel('');
@@ -193,6 +195,8 @@ end
 if (plotselector == 2) % Position and Velocity over Time
     plot(simulation_data_k(1, :), sqrt(simulation_data_k(1, :).^2 + simulation_data_k(2, :).^2 + simulation_data_k(3, :).^2))
     plot(simulation_data_k(1, :), sqrt(simulation_data_k(4, :).^2 + simulation_data_k(5, :).^2 + simulation_data_k(6, :).^2))
+    ylim([0 200])
+    xlim([0 15])
     title('Sträcka och Hastighet');
     xlabel('Tid [s]');
     ylabel('');
@@ -210,6 +214,8 @@ if (plotselector == 3) % Braking over Time
     %plot(simulation_data_b(1, :), b2)
     %plot(simulation_data_b(1, :), b3)
     %plot(simulation_data_b(1, :), b4)
+    ylim([0 4.5*10^4])
+    xlim([0 15])
     title('Bromskraft');
     xlabel('Tid [s]');
     ylabel('Kraft [N]');
@@ -225,6 +231,8 @@ if (plotselector == 4) % Temperature over Time
     %plot(simulation_data_b(1, :), b2)
     plot(simulation_data_b(1, :), b3)
     %plot(simulation_data_b(1, :), b4)
+    ylim([280 340])
+    xlim([0 15])
     title('Bromstemperatur');
     xlabel('Tid [s]');
     ylabel('Temperatur [K]');
