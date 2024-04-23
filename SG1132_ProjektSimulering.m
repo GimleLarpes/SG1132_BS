@@ -4,7 +4,7 @@ LOG_FREQUENCY = 1.0;
 LOG_ENABLED = true;
 
 %Simulation parameters
-SIMULATION_TIME = 600.0;       %Simulation duration (s)
+SIMULATION_TIME = 60.0;       %Simulation duration (s)
 SIMULATION_END_ON_STOP = true;
 SIMULATION_RESOLUTION = 100;  %Steps per second (s^-1)
 SIMULATION_GRAVITY = 9.80665; %Assume gravity constant (ms^-2)
