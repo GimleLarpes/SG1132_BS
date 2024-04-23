@@ -1,3 +1,9 @@
+%%ANALYS:
+% Scenariot är att tåget stannar så fort som möjligt och på så kort sträcka som möjligt från 100kmh.
+
+% Medelvärde av bromssträckan då man ignorerar de punkter där upplösningen < 500: 154.0093334843901 meter.
+% Noggranhetsanalys Sträcka över tid-grafen visar den beräknade optimala bromssträckan med anti-glid-system över olika upplösningar. (medel är 5 point trailing average)
+
 %Simulation engine for ~~rockets~~trains and stuff
 clear all
 LOG_FREQUENCY = 1.0;
@@ -183,13 +189,17 @@ simulation_data_l = cat(2, simulation_data_l, [SIMULATION_RESOLUTION; norm(posit
 end
 
 %Plots
-plotselector = 6;
+plotselector = 1;
+clf
 hold on
-if (plotselector == 6) % Velocity and Deceleration over Time
+if (plotselector == 1) % Calculated distance over simulation resolution
+    rolling_mean = movmean(simulation_data_l(2, :), [5 0]); % 5 point trailing average
     plot(simulation_data_l(1, :), simulation_data_l(2, :))
-    title('Sträcka över Upplösning');
-    xlabel('Steg per Sekund');
+    plot(simulation_data_l(1, :), rolling_mean)
+    title('Beräknad Sträcka');
+    xlabel('Steg per Sekund [s^{-1}]');
     ylabel('Sträcka [m]');
+    legend('Punktvis','Medelvärde');
 end
 
 
