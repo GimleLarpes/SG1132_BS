@@ -20,6 +20,7 @@ e_WindDirection = 0; % Global Wind Direction (RAD)
 
 e_GroundNormal = [0, 0, 1]; % Normal vector of the ground plane
 
+for SIMULATION_RESOLUTION=10:10:1000
 %Train parameters
 t_MassCargo = 0.0; % (kg) - MAX 29800
 t_MassCart = 15000; % (kg)
@@ -178,84 +179,18 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
         break;
     end
 end
+simulation_data_l = cat(2, simulation_data_l, [SIMULATION_RESOLUTION; norm(position_vector)]);
+end
 
 %Plots
-plotselector = 5;
+plotselector = 6;
 hold on
-if (plotselector == 1) % Velocity and Deceleration over Time
-    plot(simulation_data_k(1, :), sqrt(simulation_data_k(4, :).^2 + simulation_data_k(5, :).^2 + simulation_data_k(6, :).^2))
-    plot(simulation_data_k(1, :), sqrt(simulation_data_k(7, :).^2 + simulation_data_k(8, :).^2 + simulation_data_k(9, :).^2))
-    title('Hastighet och Deceleration');
-    xlabel('Tid [s]');
+if (plotselector == 6) % Velocity and Deceleration over Time
+    plot(simulation_data_l(1, :), )
+    title('Sträcka över Upplösning');
+    xlabel('Steg/s');
     ylabel('');
     legend('Hastighet [m/s]','Deceleration [m/s^2]');
-end
-if (plotselector == 2) % Position and Velocity over Time
-    plot(simulation_data_k(1, :), sqrt(simulation_data_k(1, :).^2 + simulation_data_k(2, :).^2 + simulation_data_k(3, :).^2))
-    plot(simulation_data_k(1, :), sqrt(simulation_data_k(4, :).^2 + simulation_data_k(5, :).^2 + simulation_data_k(6, :).^2))
-    title('Sträcka och Hastighet');
-    xlabel('Tid [s]');
-    ylabel('');
-    legend('Sträcka [m]','Hastighet [m/s]');
-end
-if (plotselector == 3) % Braking over Time
-    b1 = simulation_data_b(2, :);
-    b2 = simulation_data_b(5, :);
-    b3 = simulation_data_b(8, :);
-    b4 = simulation_data_b(11, :);
-    plot(simulation_data_b(1, :), b1 + b2 + b3 + b4)
-    plot(simulation_data_b(1, :), b1 + b2)
-    plot(simulation_data_b(1, :), b3 + b4)
-    %plot(simulation_data_b(1, :), b1)
-    %plot(simulation_data_b(1, :), b2)
-    %plot(simulation_data_b(1, :), b3)
-    %plot(simulation_data_b(1, :), b4)
-    title('Bromskraft');
-    xlabel('Tid [s]');
-    ylabel('Kraft [N]');
-    %legend('Totalt','Fram Vänster','Fram Höger','Bak Vänster','Bak Höger');
-    legend('Totalt','Fram V+H','Bak V+H');
-end
-if (plotselector == 4) % Temperature over Time
-    b1 = simulation_data_b(3, :);
-    b2 = simulation_data_b(6, :);
-    b3 = simulation_data_b(9, :);
-    b4 = simulation_data_b(12, :);
-    plot(simulation_data_b(1, :), b1)
-    %plot(simulation_data_b(1, :), b2)
-    plot(simulation_data_b(1, :), b3)
-    %plot(simulation_data_b(1, :), b4)
-    title('Bromstemperatur');
-    xlabel('Tid [s]');
-    ylabel('Temperatur [K]');
-    legend('Fram','Bak');
-end
-if (plotselector == 5) % Braking and Temperature over Time
-    clf
-    tiledlayout(2, 1); %%I DONT THINK TILEDLAYOUT LIKES MULTIPLE PLOTS IN ONE TILE
-    nexttile
-    b1 = simulation_data_b(2, :);
-    b2 = simulation_data_b(5, :);
-    b3 = simulation_data_b(8, :);
-    b4 = simulation_data_b(11, :);
-    plot(simulation_data_b(1, :), b1 + b2 + b3 + b4)
-    plot(simulation_data_b(1, :), b1 + b2)
-    plot(simulation_data_b(1, :), b3 + b4)
-    title('Bromskraft');
-    xlabel('Tid [s]');
-    ylabel('Kraft [N]');
-    legend('Totalt','Fram V+H','Bak V+H');
-    nexttile
-    b1 = simulation_data_b(3, :);
-    b2 = simulation_data_b(6, :);
-    b3 = simulation_data_b(9, :);
-    b4 = simulation_data_b(12, :);
-    plot(simulation_data_b(1, :), b1)
-    plot(simulation_data_b(1, :), b3)
-    title('Bromstemperatur');
-    xlabel('Tid [s]');
-    ylabel('Temperatur [K]');
-    legend('Fram','Bak');
 end
 
 
