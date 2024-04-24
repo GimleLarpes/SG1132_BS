@@ -39,7 +39,7 @@ t_MassBrake = 4*50; % (kg)
 t_BrakeForce = 2500.0; % (N)
 b_CFriction = 0.42; % Inner brake coefficient of friction
 t_BrakeSurfaceArea = 2 * (0.5*0.3 + 0.3*0.15 + 0.15*0.5); % (m^2)
-ABS_ENABLED = false;
+ABS_ENABLED = true;
 
 % Aerodynamics
 t_CDrag = 0.98; % Drag coefficient
@@ -57,7 +57,7 @@ train_data = [t_Mass, t_MassCenter, t_BrakeForce, b_CFriction, t_CFriction, t_CF
 brake_state = [0, e_AtmosphericTemperature, 0, 0, e_AtmosphericTemperature, 0, 0, e_AtmosphericTemperature, 0, 0, e_AtmosphericTemperature, 0]; %Vector of braking forces, temperature, slip - Top left, Top right, Bottom left, Bottom right
 kinematic_state = [0, 0, 0, t_StartHastighet, 0, 0, 0, 0, 0]; % Pos: X, Y, Z  Velocity: X, Y, Z  Acceleration: X, Y, Z
 brake_actuation = 0;
-brake_limit = 0.73;
+brake_limit = 1.0;
 brake_slippage_prev = false;
 for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
     
@@ -180,7 +180,7 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
 end
 
 %Plots
-plotselector = 1;
+plotselector = 2;
 hold on
 if (plotselector == 1) % Velocity and Deceleration over Time
     plot(simulation_data_k(1, :), sqrt(simulation_data_k(4, :).^2 + simulation_data_k(5, :).^2 + simulation_data_k(6, :).^2))
@@ -199,7 +199,7 @@ if (plotselector == 2) % Position and Velocity over Time
     xlim([0 15])
     title('Sträcka och Hastighet');
     xlabel('Tid [s]');
-    ylabel('');
+    ylabel('[m], [m/s]');
     legend('Sträcka [m]','Hastighet [m/s]');
 end
 if (plotselector == 3) % Braking over Time

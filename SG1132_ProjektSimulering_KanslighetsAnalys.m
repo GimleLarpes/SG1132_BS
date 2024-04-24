@@ -2,7 +2,7 @@
 % Scenariot är att tåget stannar så fort som möjligt och på så kort sträcka som möjligt från 100kmh.
 %% Resultat:
 % Anti-Glid inbromsning: Tid: 10.92s, Bromssträcka: 153.2759m, Medel Bromstemp: 337.5271541334959 K
-% Perfekt inbromsning: Tid: 10.30s, Bromssträcka: 144.644m, Medel Bromstemp: 338.6922578057968 K
+% Perfekt inbromsning: Tid: 10.30s, Bromssträcka: 144.644m, Medel Bromstemp: 338.6922578057968 K  (maxbroms: 0.73)
 % Tvärnit, glidning: Tid: 14.8s, Bromssträcka: 199.4272m, Medel Bromstemp: 290.1389782230344 K
 
 
