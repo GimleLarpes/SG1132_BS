@@ -30,7 +30,7 @@ e_WindDirection = 0; % Global Wind Direction (RAD)
 e_GroundNormal = [0, 0, 1]; % Normal vector of the ground plane
 
 simulation_data_l = [];
-for SIMULATION_RESOLUTION=10:10:1000
+for SIMULATION_RESOLUTION=10:1:1000
 dTime = 1/SIMULATION_RESOLUTION;
 %Train parameters
 t_MassCargo = 0.0; % (kg) - MAX 29800
@@ -198,7 +198,7 @@ plotselector = 1;
 clf
 hold on
 if (plotselector == 1) % Calculated distance over simulation resolution
-    rolling_mean = movmean(simulation_data_l(2, :), [5 0]); % 5 point trailing average
+    rolling_mean = movmean(simulation_data_l(2, :), [25 0]); % 5 point trailing average
     plot(simulation_data_l(1, :), simulation_data_l(2, :))
     plot(simulation_data_l(1, :), rolling_mean)
     title('Beräknad Sträcka');

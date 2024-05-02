@@ -180,19 +180,9 @@ for t=0:SIMULATION_TIME*SIMULATION_RESOLUTION
 end
 
 %Plots
-plotselector = 2;
+plotselector = 1;
 hold on
-if (plotselector == 1) % Velocity and Deceleration over Time
-    plot(simulation_data_k(1, :), sqrt(simulation_data_k(4, :).^2 + simulation_data_k(5, :).^2 + simulation_data_k(6, :).^2))
-    plot(simulation_data_k(1, :), sqrt(simulation_data_k(7, :).^2 + simulation_data_k(8, :).^2 + simulation_data_k(9, :).^2))
-    ylim([0 30])
-    xlim([0 15])
-    title('Hastighet och Deceleration');
-    xlabel('Tid [s]');
-    ylabel('');
-    legend('Hastighet [m/s]','Deceleration [m/s^2]');
-end
-if (plotselector == 2) % Position and Velocity over Time
+if (plotselector == 1) % Position and Velocity over Time
     plot(simulation_data_k(1, :), sqrt(simulation_data_k(1, :).^2 + simulation_data_k(2, :).^2 + simulation_data_k(3, :).^2))
     plot(simulation_data_k(1, :), sqrt(simulation_data_k(4, :).^2 + simulation_data_k(5, :).^2 + simulation_data_k(6, :).^2))
     ylim([0 200])
@@ -201,6 +191,16 @@ if (plotselector == 2) % Position and Velocity over Time
     xlabel('Tid [s]');
     ylabel('[m], [m/s]');
     legend('Sträcka [m]','Hastighet [m/s]');
+end
+if (plotselector == 2) % Velocity and Deceleration over Time
+    plot(simulation_data_k(1, :), sqrt(simulation_data_k(4, :).^2 + simulation_data_k(5, :).^2 + simulation_data_k(6, :).^2))
+    plot(simulation_data_k(1, :), sqrt(simulation_data_k(7, :).^2 + simulation_data_k(8, :).^2 + simulation_data_k(9, :).^2))
+    ylim([0 30])
+    xlim([0 15])
+    title('Hastighet och Deceleration');
+    xlabel('Tid [s]');
+    ylabel('');
+    legend('Hastighet [m/s]','Deceleration [m/s^2]');
 end
 if (plotselector == 3) % Braking over Time
     b1 = simulation_data_b(2, :);
@@ -220,7 +220,7 @@ if (plotselector == 3) % Braking over Time
     xlabel('Tid [s]');
     ylabel('Kraft [N]');
     %legend('Totalt','Fram Vänster','Fram Höger','Bak Vänster','Bak Höger');
-    legend('Totalt','Fram V+H','Bak V+H');
+    legend('Totalt','Fram','Bak');
 end
 if (plotselector == 4) % Temperature over Time
     b1 = simulation_data_b(3, :);
